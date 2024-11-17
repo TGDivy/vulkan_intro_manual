@@ -1,3 +1,4 @@
+#include <vulkan/vulkan_core.h>
 #define GLFW_INCLUDE_VULKAN
 #define VK_USE_PLATFORM_METAL_EXT
 #define VK_USE_PLATFORM_MACOS_MVK
@@ -33,6 +34,7 @@ private:
   }
 
   void cleanup() {
+    vkDestroyInstance(instance, nullptr);
     glfwDestroyWindow(window);
     glfwTerminate();
   }
@@ -56,6 +58,21 @@ private:
     return VK_FALSE;
   }
 
+  VkDebugUtilsMessengerCreateInfoEXT getDebugMessengerCreateInfo() {
+    VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    createInfo.messageSeverity =
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                             VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    createInfo.pfnUserCallback = debugCallback;
+
+    return createInfo;
+  }
+
   void createInstance() {
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -63,64 +80,35 @@ private:
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.pEngineName = "No Engine";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion =
-        VK_API_VERSION_1_2; // Ensure Vulkan 1.2 or higher is used
+    appInfo.apiVersion = VK_API_VERSION_1_2;
 
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
 
-    // Get required extensions from GLFW
-    uint32_t glfwExtensionCount = 0;
-    const char **glfwExtensions =
-        glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-    std::cout << "Required extensions:\n";
-    for (uint32_t i = 0; i < glfwExtensionCount; i++) {
-      std::cout << glfwExtensions[i] << std::endl;
-    }
-
-    // Add Metal-specific extensions manually (if not provided by GLFW)
-    const char *additionalExtensions[] = {"VK_EXT_metal_surface",
-                                          "VK_KHR_portability_enumeration"};
-
-    std::vector<const char *> extensions(glfwExtensions,
-                                         glfwExtensions + glfwExtensionCount);
-    extensions.insert(extensions.end(), std::begin(additionalExtensions),
-                      std::end(additionalExtensions));
-
-    createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-    createInfo.ppEnabledExtensionNames = extensions.data();
-
-    // Enable validation layers for debugging
-    const char *validationLayers[] = {"VK_LAYER_KHRONOS_validation"};
-    createInfo.enabledLayerCount = 1;
-    createInfo.ppEnabledLayerNames = validationLayers;
-
-    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-    debugCreateInfo.sType =
-        VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    debugCreateInfo.messageSeverity =
-        VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-        VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-    debugCreateInfo.messageType =
-        VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-        VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-        VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    debugCreateInfo.pfnUserCallback = debugCallback; // Define this function
-
+    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo =
+        getDebugMessengerCreateInfo();
     createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *)&debugCreateInfo;
 
-    // Add this line to set the VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR
-    // flag
-    createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+    uint32_t glfwExtensionCount = 0;
+    const char **glfwExtensions;
+    glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
-    // Create Vulkan instance
-    VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
-    if (result != VK_SUCCESS) {
-      std::cerr << "vkCreateInstance failed with error code: " << result
-                << std::endl;
+    std::vector<const char *> requiredExtensions;
+    for (uint32_t i = 0; i < glfwExtensionCount; i++) {
+      requiredExtensions.emplace_back(glfwExtensions[i]);
+    }
+    requiredExtensions.emplace_back(
+        VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+
+    createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+
+    createInfo.enabledExtensionCount = (uint32_t)requiredExtensions.size();
+    createInfo.ppEnabledExtensionNames = requiredExtensions.data();
+
+    createInfo.enabledLayerCount = 0;
+
+    if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
       throw std::runtime_error("failed to create instance!");
     }
   }
