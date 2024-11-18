@@ -8,10 +8,13 @@
 #include <optional>
 #include <vector>
 #include <vulkan/vulkan.h>
+#include <vulkan/vulkan_beta.h>
 
 class VulkanApp {
 public:
   void run();
+
+  VulkanApp(GLFWwindow *window) : window(window) {}
 
 private:
   void initVulkan();
@@ -37,11 +40,21 @@ private:
     std::vector<VkPresentModeKHR> presentModes;
   };
 
-  bool isDeviceSuitable(VkPhysicalDevice device);
   int rateDeviceSuitability(VkPhysicalDevice device);
   bool checkDeviceExtensionSupport(VkPhysicalDevice device);
   QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
   SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+  VkSurfaceFormatKHR chooseSwapSurfaceFormat(
+      const std::vector<VkSurfaceFormatKHR> &availableFormats);
+  VkPresentModeKHR chooseSwapPresentMode(
+      const std::vector<VkPresentModeKHR> &availablePresentModes);
+  VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
+  void createSwapChain();
+  void createImageViews();
+  void createGraphicsPipeline();
+  void createRenderPass();
+  void createFramebuffers();
+  void createCommandPool();
 
   GLFWwindow *window;
   VkInstance instance;
@@ -50,7 +63,16 @@ private:
   VkQueue graphicsQueue;
   VkSurfaceKHR surface;
   VkQueue presentQueue;
+  VkSwapchainKHR swapChain;
+  std::vector<VkImage> swapChainImages;
+  VkFormat swapChainImageFormat;
+  VkExtent2D swapChainExtent;
+  std::vector<VkImageView> swapChainImageViews;
+  VkRenderPass renderPass;
+  VkPipelineLayout pipelineLayout;
+  VkPipeline graphicsPipeline;
 
   const std::vector<const char *> deviceExtensions = {
-      VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+      VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+      VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME};
 };

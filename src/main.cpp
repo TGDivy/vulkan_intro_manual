@@ -18,7 +18,7 @@ int main() {
   Window window;
   window.initWindow(WIDTH, HEIGHT, "Vulkan");
 
-  VulkanApp app;
+  VulkanApp app(window.getWindow());
 
   try {
     app.run();
