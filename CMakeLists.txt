@@ -9,6 +9,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Add source files
 set(SOURCES
     src/main.cpp
+    src/VulkanApp.cpp
+    src/Window.cpp
 )
 
 # Find Vulkan SDK
@@ -22,6 +24,7 @@ pkg_check_modules(GLFW REQUIRED glfw3)
 include_directories(
     ${Vulkan_INCLUDE_DIRS}
     ${GLFW_INCLUDE_DIRS}
+    include
 )
 
 # Link libraries
