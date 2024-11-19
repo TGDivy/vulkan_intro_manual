@@ -108,7 +108,8 @@ void VulkanApp::initVulkan() {
   device.createLogicalDevice(surface);
   swapChain.createSwapChain(device, surface, window);
   swapChain.createImageViews(device);
-  graphicsPipeline.createGraphicsPipeline(device);
+  graphicsPipeline.createRenderPass(device, swapChain);
+  graphicsPipeline.createGraphicsPipeline(device, swapChain);
 }
 
 void VulkanApp::createInstance() {
@@ -159,6 +160,8 @@ void VulkanApp::mainLoop() {
 }
 
 void VulkanApp::cleanup() {
+  graphicsPipeline.destroyGraphicsPipeline(device);
+  graphicsPipeline.destroyRenderPass(device);
   for (auto imageView : swapChain.getSwapChainImageViews()) {
     vkDestroyImageView(device.getDevice(), imageView, nullptr);
   }
