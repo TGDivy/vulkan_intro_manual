@@ -27,19 +27,26 @@ pkg_check_modules(GLFW REQUIRED glfw3)
 set(GLSLC /Users/dbramhecha/VulkanSDK/1.3.296.0/macOS/bin/glslc)
 
 # Compile shaders
+
+# Define the path to the shaders directory
+set(SHADERS_DIR "${CMAKE_SOURCE_DIR}/shaders")
+
+# Add the preprocessor definition
+add_definitions(-DSHADERS_DIR=\"${SHADERS_DIR}\")
+
 add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert.spv
-    COMMAND ${GLSLC} ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert.spv
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert
+    OUTPUT ${SHADERS_DIR}/shader.vert.spv
+    COMMAND ${GLSLC} ${SHADERS_DIR}/shader.vert -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert.spv
+    DEPENDS ${SHADERS_DIR}/shader.vert
 )
 
 add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag.spv
-    COMMAND ${GLSLC} ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag.spv
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag
+    OUTPUT ${SHADERS_DIR}/shader.frag.spv
+    COMMAND ${GLSLC} ${SHADERS_DIR}/shader.frag -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag.spv
+    DEPENDS ${SHADERS_DIR}/shader.frag
 )
 
-add_custom_target(shaders DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert.spv ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag.spv)
+add_custom_target(shaders DEPENDS ${SHADERS_DIR}/shader.vert.spv ${SHADERS_DIR}/shader.frag.spv)
 
 # Include paths
 include_directories(

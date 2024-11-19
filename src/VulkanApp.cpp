@@ -108,6 +108,7 @@ void VulkanApp::initVulkan() {
   device.createLogicalDevice(surface);
   swapChain.createSwapChain(device, surface, window);
   swapChain.createImageViews(device);
+  graphicsPipeline.createGraphicsPipeline(device);
 }
 
 void VulkanApp::createInstance() {
