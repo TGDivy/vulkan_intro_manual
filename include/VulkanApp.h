@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+#include <vulkan/vulkan_core.h>
 #define GLFW_INCLUDE_VULKAN
 #define VK_USE_PLATFORM_METAL_EXT
 #define VK_USE_PLATFORM_MACOS_MVK
@@ -23,14 +25,18 @@ private:
   void createInstance();
   void createSurface();
 
-  void createGraphicsPipeline();
-  void createRenderPass();
   void createFramebuffers();
   void createCommandPool();
+  void createCommandBuffer();
+  void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
   GLFWwindow *window;
   VkInstance instance;
   VkSurfaceKHR surface;
+  VkCommandPool commandPool;
+  VkCommandBuffer commandBuffer;
+  std::vector<VkFramebuffer> swapChainFramebuffers;
+
   Device device;
   SwapChain swapChain;
   GraphicsPipeline graphicsPipeline;

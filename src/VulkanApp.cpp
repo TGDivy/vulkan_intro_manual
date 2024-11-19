@@ -110,6 +110,9 @@ void VulkanApp::initVulkan() {
   swapChain.createImageViews(device);
   graphicsPipeline.createRenderPass(device, swapChain);
   graphicsPipeline.createGraphicsPipeline(device, swapChain);
+  createFramebuffers();
+  createCommandPool();
+  createCommandBuffer();
 }
 
 void VulkanApp::mainLoop() {
@@ -119,6 +122,10 @@ void VulkanApp::mainLoop() {
 }
 
 void VulkanApp::cleanup() {
+  vkDestroyCommandPool(device.getDevice(), commandPool, nullptr);
+  for (auto framebuffer : swapChainFramebuffers) {
+    vkDestroyFramebuffer(device.getDevice(), framebuffer, nullptr);
+  }
   graphicsPipeline.destroyGraphicsPipeline(device);
   graphicsPipeline.destroyRenderPass(device);
   for (auto imageView : swapChain.getSwapChainImageViews()) {
@@ -171,4 +178,93 @@ void VulkanApp::createSurface() {
       VK_SUCCESS) {
     throw std::runtime_error("failed to create window surface!");
   }
+}
+
+void VulkanApp::createFramebuffers() {
+  swapChainFramebuffers.resize(swapChain.getSwapChainImageViews().size());
+
+  for (size_t i = 0; i < swapChain.getSwapChainImageViews().size(); i++) {
+    VkImageView attachments[] = {swapChain.getSwapChainImageViews()[i]};
+
+    VkFramebufferCreateInfo framebufferInfo{};
+    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebufferInfo.renderPass = graphicsPipeline.getRenderPass();
+    framebufferInfo.attachmentCount = 1;
+    framebufferInfo.pAttachments = attachments;
+    framebufferInfo.width = swapChain.getSwapChainExtent().width;
+    framebufferInfo.height = swapChain.getSwapChainExtent().height;
+    framebufferInfo.layers = 1;
+
+    if (vkCreateFramebuffer(device.getDevice(), &framebufferInfo, nullptr,
+                            &swapChainFramebuffers[i]) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create framebuffer!");
+    }
+  }
+}
+
+void VulkanApp::createCommandPool() {
+  QueueFamilyIndices queueFamilyIndices =
+      device.findQueueFamilies(device.getPhysicalDevice(), surface);
+
+  VkCommandPoolCreateInfo poolInfo{};
+  poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+  poolInfo.flags = 0;
+
+  if (vkCreateCommandPool(device.getDevice(), &poolInfo, nullptr,
+                          &commandPool) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create command pool!");
+  }
+}
+
+void VulkanApp::createCommandBuffer() {
+  VkCommandBufferAllocateInfo allocInfo{};
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.commandPool = commandPool;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandBufferCount = 1;
+
+  if (vkAllocateCommandBuffers(device.getDevice(), &allocInfo,
+                               &commandBuffer) != VK_SUCCESS) {
+    throw std::runtime_error("failed to allocate command buffers!");
+  }
+}
+
+void VulkanApp::recordCommandBuffer(VkCommandBuffer commandBuffer,
+                                    uint32_t imageIndex) {
+  VkCommandBufferBeginInfo beginInfo{};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = 0;
+  beginInfo.pInheritanceInfo = nullptr;
+
+  if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+    throw std::runtime_error("failed to begin recording command buffer!");
+  }
+
+  VkRenderPassBeginInfo renderPassInfo{};
+  renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  renderPassInfo.renderPass = graphicsPipeline.getRenderPass();
+  renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+  renderPassInfo.renderArea.offset = {0, 0};
+  renderPassInfo.renderArea.extent = swapChain.getSwapChainExtent();
+
+  VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+  renderPassInfo.clearValueCount = 1;
+  renderPassInfo.pClearValues = &clearColor;
+
+  vkCmdBeginRenderPass(commandBuffer, &renderPassInfo,
+                       VK_SUBPASS_CONTENTS_INLINE);
+
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    graphicsPipeline.getGraphicsPipeline());
+
+  vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+  vkCmdEndRenderPass(commandBuffer);
+
+  if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+    throw std::runtime_error("failed to record command buffer!");
+  }
+
+  std::cout << "Command buffer recorded successfully!" << std::endl;
 }
