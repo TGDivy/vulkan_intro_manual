@@ -1,6 +1,5 @@
 #include "VulkanApp.h"
 #include "Window.h"
-#include <vector>
 
 #include <GLFW/glfw3.h>
 
@@ -11,8 +10,6 @@
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
-const std::vector<const char *> deviceExtensions = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 int main() {
   Window window;

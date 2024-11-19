@@ -11,6 +11,7 @@ set(SOURCES
     src/main.cpp
     src/VulkanApp.cpp
     src/Window.cpp
+    src/Device.cpp
 )
 
 # Find Vulkan SDK
