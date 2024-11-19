@@ -6,6 +6,7 @@
 
 #include <Device.h>
 #include <GLFW/glfw3.h>
+#include <GraphicsPipeline.h>
 #include <SwapChain.h>
 
 class VulkanApp {
@@ -32,8 +33,5 @@ private:
   VkSurfaceKHR surface;
   Device device;
   SwapChain swapChain;
-
-  VkRenderPass renderPass;
-  VkPipelineLayout pipelineLayout;
-  VkPipeline graphicsPipeline;
+  GraphicsPipeline graphicsPipeline;
 };
