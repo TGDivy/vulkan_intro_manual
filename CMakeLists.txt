@@ -13,6 +13,7 @@ set(SOURCES
     src/Window.cpp
     src/Device.cpp
     src/SwapChain.cpp
+    src/GraphicsPipeline.cpp
 )
 
 # Find Vulkan SDK
@@ -21,6 +22,24 @@ find_package(Vulkan REQUIRED)
 # Add GLFW
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLFW REQUIRED glfw3)
+
+# Define the path to glslc
+set(GLSLC /Users/dbramhecha/VulkanSDK/1.3.296.0/macOS/bin/glslc)
+
+# Compile shaders
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert.spv
+    COMMAND ${GLSLC} ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert.spv
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert
+)
+
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag.spv
+    COMMAND ${GLSLC} ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag -o ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag.spv
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag
+)
+
+add_custom_target(shaders DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.vert.spv ${CMAKE_CURRENT_SOURCE_DIR}/shaders/shader.frag.spv)
 
 # Include paths
 include_directories(
@@ -35,6 +54,9 @@ add_definitions(${GLFW_CFLAGS_OTHER})
 
 # Create executable
 add_executable(${PROJECT_NAME} ${SOURCES})
+
+# Add the shaders as a dependency
+add_dependencies(${PROJECT_NAME} shaders)
 
 # Link Vulkan and GLFW
 target_link_libraries(${PROJECT_NAME}
