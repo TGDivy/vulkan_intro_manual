@@ -16,6 +16,7 @@ public:
   void destroyGraphicsPipeline(Device device);
 
   VkPipelineLayout getPipelineLayout() { return pipelineLayout; }
+  VkRenderPass getRenderPass() { return renderPass; }
 
 private:
   VkRenderPass renderPass;

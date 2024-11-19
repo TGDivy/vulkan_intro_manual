@@ -112,6 +112,26 @@ void VulkanApp::initVulkan() {
   graphicsPipeline.createGraphicsPipeline(device, swapChain);
 }
 
+void VulkanApp::mainLoop() {
+  while (!glfwWindowShouldClose(window)) {
+    glfwPollEvents();
+  }
+}
+
+void VulkanApp::cleanup() {
+  graphicsPipeline.destroyGraphicsPipeline(device);
+  graphicsPipeline.destroyRenderPass(device);
+  for (auto imageView : swapChain.getSwapChainImageViews()) {
+    vkDestroyImageView(device.getDevice(), imageView, nullptr);
+  }
+  vkDestroySwapchainKHR(device.getDevice(), swapChain.getSwapChain(), nullptr);
+  vkDestroyDevice(device.getDevice(), nullptr);
+  vkDestroySurfaceKHR(instance, surface, nullptr);
+  vkDestroyInstance(instance, nullptr);
+  glfwDestroyWindow(window);
+  glfwTerminate();
+}
+
 void VulkanApp::createInstance() {
   if (enableValidationLayers && !checkValidationLayerSupport()) {
     throw std::runtime_error("validation layers requested, but not available!");
@@ -151,24 +171,4 @@ void VulkanApp::createSurface() {
       VK_SUCCESS) {
     throw std::runtime_error("failed to create window surface!");
   }
-}
-
-void VulkanApp::mainLoop() {
-  while (!glfwWindowShouldClose(window)) {
-    glfwPollEvents();
-  }
-}
-
-void VulkanApp::cleanup() {
-  graphicsPipeline.destroyGraphicsPipeline(device);
-  graphicsPipeline.destroyRenderPass(device);
-  for (auto imageView : swapChain.getSwapChainImageViews()) {
-    vkDestroyImageView(device.getDevice(), imageView, nullptr);
-  }
-  vkDestroySwapchainKHR(device.getDevice(), swapChain.getSwapChain(), nullptr);
-  vkDestroyDevice(device.getDevice(), nullptr);
-  vkDestroySurfaceKHR(instance, surface, nullptr);
-  vkDestroyInstance(instance, nullptr);
-  glfwDestroyWindow(window);
-  glfwTerminate();
 }
